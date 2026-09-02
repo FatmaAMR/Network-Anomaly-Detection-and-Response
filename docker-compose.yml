@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  ingestion_service:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ingestion
+    ports:
+      - "8000:8000"
+    depends_on:
+      - detection_service
+
+  detection_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.detection
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./shared:/app/shared
+
+  dashboard_ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    depends_on:
+      - detection_service
