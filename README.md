@@ -11,8 +11,7 @@ An ML-powered cybersecurity platform designed to assist SOC analysts in detectin
 
 1. **Clone the repository:**
    ```bash
-   git clone <repo-url>
-   cd ndr-ml-pipeline
+   git clone https://github.com/FatmaAMR/Network-Anomaly-Detection-and-Response.git
    ```
 
 2. **Start the microservices:**
