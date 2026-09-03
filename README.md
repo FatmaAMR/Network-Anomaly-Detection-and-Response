@@ -2,11 +2,11 @@
 
 An ML-powered cybersecurity platform designed to assist SOC analysts in detecting, classifying, and prioritizing anomalous network activity using an event-driven microservices architecture.
 
-## Architecture
-- **Ingestion Service (FastAPI):** Simulates or ingests real-time network traffic streams.
-- **Detection Service (FastAPI):** The core ML engine processing payloads. Orchestrates One-Class SVM (Anomaly Detection) and Supervised Classifiers (Attack Classification).
-- **SOC Dashboard:** Real-time monitoring UI tailored for security teams.
-
+##  System Architecture
+1. **Ingestion Service**: Simulates raw network traffic and streams packets into Kafka (Producer).
+2. **Message Broker**: Apache Kafka & Zookeeper handling high-throughput telemetry data.
+3. **Detection Service**: Consumes Kafka events, processes them through the UNSW-NB15 ML classification pipeline, and serves the REST APIs.
+4. **Dashboard UI**: A custom, dark-themed vanilla HTML/JS interface for real-time monitoring and SOC analyst actions.
 ## Quick Start
 
 1. **Clone the repository:**
