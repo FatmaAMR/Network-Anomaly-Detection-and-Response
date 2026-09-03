@@ -1,0 +1,4 @@
+FROM nginx:alpine
+COPY dashboard_ui/index.html /usr/share/nginx/html/index.html
+ENV API_BASE_URL="http://localhost:8001"
+CMD sed -i "s|API_BASE_URL_PLACEHOLDER|${API_BASE_URL}|g" /usr/share/nginx/html/index.html && nginx -g "daemon off;"

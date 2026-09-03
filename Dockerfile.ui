@@ -1,4 +1,0 @@
-FROM nginx:alpine
-COPY dashboard_ui/index.html /usr/share/nginx/html/index.html
-COPY dashboard_ui/app.js /usr/share/nginx/html/app.js
-EXPOSE 80

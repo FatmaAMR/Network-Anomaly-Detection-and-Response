@@ -5,16 +5,31 @@ import random
 import os
 from datetime import datetime
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from kafka import KafkaConsumer
 from collections import Counter
 from pydantic import BaseModel
 
-app = FastAPI(title="Detection Engine")
+app = FastAPI(title="Aegis SOC - Detection Engine")
+
+# تفعيل CORS عشان بورت 80 يقدر يكلم بورت 8001
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 alerts_db = []
-KAFKA_BROKER = "kafka:29092"
+global_stats = {
+    "total_events": 0,
+    "total_bytes": 0,
+    "start_time": datetime.now().timestamp()
+}
+
+# قراءة رابط الكافكا من متغيرات البيئة (أو وضع افتراضي)
+KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:29092")
 TOPIC_NAME = "network-events"
 
 class DetectionResult(BaseModel):
@@ -31,7 +46,6 @@ class DetectionResult(BaseModel):
 def process_ml(event):
     score = random.uniform(0.0, 1.0)
     is_anomaly = score > 0.70
-    
     categories = ["Exploits", "Generic", "Fuzzers", "DoS", "Reconnaissance"]
     category = random.choice(categories) if is_anomaly else "Normal"
     
@@ -48,7 +62,6 @@ def process_ml(event):
     )
 
 async def consume_kafka():
-    loop = asyncio.get_event_loop()
     try:
         consumer = KafkaConsumer(
             TOPIC_NAME,
@@ -57,7 +70,11 @@ async def consume_kafka():
             auto_offset_reset='latest'
         )
         for msg in consumer:
-            result = process_ml(msg.value)
+            event = msg.value
+            global_stats["total_events"] += 1
+            global_stats["total_bytes"] += event.get("sbytes", 0) + event.get("dbytes", 0)
+            
+            result = process_ml(event)
             if result.is_anomaly:
                 alerts_db.insert(0, result)
                 if len(alerts_db) > 1500:
@@ -74,11 +91,19 @@ async def startup_event():
 async def get_stats():
     high_alerts = sum(1 for a in alerts_db if a.severity in ["High", "Critical"])
     unique_ips = len(set(a.srcip for a in alerts_db))
+    elapsed = max(1, datetime.now().timestamp() - global_stats["start_time"])
+    throughput_bps = (global_stats["total_bytes"] * 8) / elapsed
+    throughput_gbps = throughput_bps / (1024**3)
+    counts = Counter(a.attack_category for a in alerts_db)
+    total_anomalies = max(1, sum(counts.values()))
+    classifications = {k: round((v/total_anomalies)*100) for k, v in counts.items()}
+
     return {
-        "total_events": f"{len(alerts_db) * 1.2:.2f}k", 
-        "critical_threats": f"{high_alerts:02d}",
+        "total_events": global_stats["total_events"], 
+        "critical_threats": high_alerts,
         "suspicious_ips": unique_ips,
-        "throughput_gbps": round(random.uniform(4.0, 8.5), 2)
+        "throughput_gbps": round(throughput_gbps * 10000, 2),
+        "classifications": classifications
     }
 
 @app.get("/api/v1/alerts")
@@ -91,9 +116,3 @@ async def get_alert(event_id: str):
         if a.event_id == event_id:
             return a
     return {}
-
-@app.get("/", response_class=HTMLResponse)
-async def serve_ui():
-    html_path = os.path.join(os.path.dirname(__file__), "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        return f.read()

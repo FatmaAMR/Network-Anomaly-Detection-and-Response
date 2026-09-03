@@ -29,3 +29,7 @@ An ML-powered cybersecurity platform designed to assist SOC analysts in detectin
    curl -X POST http://localhost:8000/api/v1/stream -H "Content-Type: application/json" -d '{"action": "start"}'
    ```
 
+
+
+```sudo docker exec -it ndr-mvp-kafka-1 kafka-console-consumer --bootstrap-server localhost:9092 --topic network-events --from-beginning
+```
