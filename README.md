@@ -5,7 +5,7 @@ An ML-powered cybersecurity platform designed to assist SOC analysts in detectin
 ## Architecture
 - **Ingestion Service (FastAPI):** Simulates or ingests real-time network traffic streams.
 - **Detection Service (FastAPI):** The core ML engine processing payloads. Orchestrates One-Class SVM (Anomaly Detection) and Supervised Classifiers (Attack Classification).
-- **SOC Dashboard (Streamlit):** Real-time monitoring UI tailored for security teams.
+- **SOC Dashboard:** Real-time monitoring UI tailored for security teams.
 
 ## Quick Start
 

@@ -1,48 +1,54 @@
 import asyncio
-import httpx
+import json
 import random
+from datetime import datetime
 from fastapi import FastAPI, BackgroundTasks
-from pydantic import BaseModel
+from kafka import KafkaProducer
 
-app = FastAPI(title="NDR Ingestion Service")
+app = FastAPI(title="Ingestion Service")
 
-DETECTION_SERVICE_URL = "http://detection_service:8001/api/v1/detect"
+KAFKA_BROKER = "kafka:29092"
+TOPIC_NAME = "network-events"
+
+def get_producer():
+    try:
+        return KafkaProducer(
+            bootstrap_servers=[KAFKA_BROKER],
+            value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        )
+    except Exception as e:
+        print(f"Kafka not ready: {e}")
+        return None
+
 is_streaming = False
 
-class StreamControl(BaseModel):
-    action: str 
-
-async def generate_mock_stream():
+async def generate_traffic():
     global is_streaming
-    async with httpx.AsyncClient() as client:
-        while is_streaming:
-            event = {
-                "srcip": f"192.168.1.{random.randint(1, 255)}",
-                "sport": random.randint(1024, 65535),
-                "dstip": f"10.0.0.{random.randint(1, 255)}",
-                "dsport": random.choice([80, 443, 22, 21, 3389]),
-                "proto": random.choice(["tcp", "udp"]),
-                "state": "CON",
-                "dur": random.uniform(0.0, 5.0),
-                "sbytes": random.randint(64, 1500),
-                "dbytes": random.randint(64, 5000)
-            }
-            
-            try:
-                await client.post(DETECTION_SERVICE_URL, json=event)
-            except Exception as e:
-                print(f"Connection failed: {e}")
-                
-            await asyncio.sleep(1.5)
+    producer = get_producer()
+    
+    while is_streaming and producer:
+        event = {
+            "timestamp": datetime.now().timestamp(),
+            "srcip": f"192.168.{random.randint(1, 255)}.{random.randint(1, 255)}",
+            "dstip": f"10.0.{random.randint(1, 5)}.{random.randint(1, 255)}",
+            "sbytes": random.randint(64, 15000),
+            "dbytes": random.randint(64, 5000),
+            "sttl": random.choice([64, 128, 255]),
+            "proto": random.choice(["tcp", "udp", "icmp"])
+        }
+        producer.send(TOPIC_NAME, event)
+        await asyncio.sleep(0.5)
 
-@app.post("/api/v1/stream")
-async def control_stream(control: StreamControl, background_tasks: BackgroundTasks):
+@app.post("/api/v1/stream/start")
+async def start_stream(background_tasks: BackgroundTasks):
     global is_streaming
-    if control.action == "start" and not is_streaming:
+    if not is_streaming:
         is_streaming = True
-        background_tasks.add_task(generate_mock_stream)
-        return {"status": "Streaming started"}
-    elif control.action == "stop":
-        is_streaming = False
-        return {"status": "Streaming stopped"}
-    return {"status": "No action taken"}
+        background_tasks.add_task(generate_traffic)
+    return {"status": "Streaming started"}
+
+@app.post("/api/v1/stream/stop")
+async def stop_stream():
+    global is_streaming
+    is_streaming = False
+    return {"status": "Streaming stopped"}
