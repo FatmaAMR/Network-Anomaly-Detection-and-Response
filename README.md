@@ -31,6 +31,19 @@ The project uses a unified shell script to handle virtual environment creation a
    ```bash
    source ndr/bin/activate
    ```
+
+## Dataset Setup
+
+The Traffic Generator uses the **UNSW-NB15** dataset to simulate real-time network traffic.
+
+1. Download the dataset from [Kaggle - UNSW-NB15](https://drive.google.com/file/d/18x-zSjFCFZL_7DZQFSsTLYDZxEgZf8mU/view?usp=drive_link) you will find a `csv` with the name `Cleaned_UNSW-NB15`
+
+2. Place it inside the `traffic_generator/` directory:
+
+```text
+traffic_generator/Cleaned_UNSW-NB15.csv
+```
+
 ## Model Artifacts Placement
 Before running the application, ensure the pre-trained model artifacts are placed inside the `detection_service/models/ directory`:
 
@@ -52,3 +65,30 @@ Run the pipeline with a single command:
    chmod +x dev.sh
    ./dev.sh
    ```
+
+## Running the Frontend
+
+After starting the backend pipeline, open the frontend using **VS Code Live Server**.
+
+1. Open the frontend directory in Visual Studio Code.
+
+2. Open the main HTML file, usually `index.html`.
+
+3. Right-click `index.html` and select **Open with Live Server**.
+
+4. The dashboard will open automatically in your default browser.
+
+If it does not open automatically, use the URL provided by Live Server, typically:
+
+```text
+http://127.0.0.1:5500/
+```
+
+> Make sure the backend pipeline is running before launching the frontend.
+
+
+
+## Live Demo
+
+Want to see the system in action? Check out the live walkthrough and dashboard demonstration video:
+Watch the NDR MVP Demo  [Here](https://drive.google.com/file/d/1gn8TEXvqWigaMGUSUljwbflMODaer3FT/view?usp=sharing)
