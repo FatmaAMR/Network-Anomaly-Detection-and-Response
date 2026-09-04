@@ -36,7 +36,7 @@ The project uses a unified shell script to handle virtual environment creation a
 
 The Traffic Generator uses the **UNSW-NB15** dataset to simulate real-time network traffic.
 
-1. Download the dataset from [Kaggle - UNSW-NB15](https://drive.google.com/file/d/18x-zSjFCFZL_7DZQFSsTLYDZxEgZf8mU/view?usp=drive_link) you will find a `csv` with the name `Cleaned_UNSW-NB15`
+1. Download the dataset from [UNSW-NB15](https://drive.google.com/file/d/18x-zSjFCFZL_7DZQFSsTLYDZxEgZf8mU/view?usp=drive_link) you will find a `csv` with the name `Cleaned_UNSW-NB15`
 
 2. Place it inside the `traffic_generator/` directory:
 
