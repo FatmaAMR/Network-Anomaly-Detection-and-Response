@@ -8,7 +8,7 @@ The system consists of three decoupled components:
 1. **Traffic Generator:** Simulates real-time network flow by reading from the `UNSW-NB15` dataset and streaming JSON events to the Ingestion API.
 2. **Ingestion Service (Port 8000):** A FastAPI microservice that receives network events and acts as a Kafka Producer, publishing them to the `network-events` topic.
 3. **Detection Service (Port 8001):** A FastAPI microservice that acts as a Kafka Consumer. It processes incoming streams through a robust ML Pipeline:
-   - **Stage 1 (Random Forest + SMOTE):** Binary classification (Normal vs. Attack).
+   - **Stage 1 (TunedXGBoost):** The model had been chosen after combarison with models like Random Forest, OCSVM & Isolation Forest for Binary classification (Normal vs. Attack).
    - **Stage 2 (Tuned XGBoost):** Multi-class categorization for threat specification and risk scoring.
 ![System Architecture](./doc/arch_v1.png)
 ## Prerequisites
