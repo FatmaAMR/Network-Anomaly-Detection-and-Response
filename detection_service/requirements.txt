@@ -1,4 +1,8 @@
 fastapi
 uvicorn
-pydantic
 kafka-python
+pandas
+scikit-learn
+xgboost
+joblib
+imbalanced-learn

@@ -1,35 +1,40 @@
-import time
 import pandas as pd
 import requests
-import json
+import time
+import os
 
-CSV_FILE_PATH = "UNSW_NB15_ready_testing.csv"
-INGESTION_API_URL = "http://localhost:8000/api/ingest"
+CSV_PATH = "./Cleaned_UNSW-NB15.csv"
+INGESTION_URL = "http://localhost:8000/api/ingest"
 
-def run_traffic_simulator():
-    print(f"Reading dataset from {CSV_FILE_PATH}...")
-    df = pd.read_csv(CSV_FILE_PATH)
+def stream_real_traffic():
+    if not os.path.exists(CSV_PATH):
+        print(f"Error: CSV file not found at {CSV_PATH}")
+        return
+
+    print(f"Loading data from {CSV_PATH}...")
+    df = pd.read_csv(CSV_PATH, nrows=1000) 
     
-    if 'attack_cat' in df.columns:
-        df = df.drop(columns=['attack_cat', 'Label'], errors='ignore')
-
-    print(f"Starting traffic stream to Ingestion Service... Total rows: {len(df)}")
+    print(f"Loaded {len(df)} rows. Starting simulation...")
     
     for index, row in df.iterrows():
-        event_dict = row.to_dict()
+        event = row.to_dict()
         
-        payload = [event_dict]
-        
+        event["timestamp"] = time.time()
+        if "srcip" not in event: 
+            event["srcip"] = "192.168.1.50"
+        if "dstip" not in event: 
+            event["dstip"] = "10.0.0.5"
+
         try:
-            response = requests.post(INGESTION_API_URL, json=payload)
+            response = requests.post(INGESTION_URL, json=[event])
             if response.status_code == 200:
-                print(f"Sent row {index+1} successfully.")
+                print(f"[{index}] Sent event successfully.")
             else:
-                print(f"Failed row {index+1}: {response.text}")
+                print(f"Failed to send row {index}: {response.text}")
         except Exception as e:
             print(f"Connection error: {e}")
-        
-        time.sleep(0.5)
+            
+        time.sleep(1)
 
 if __name__ == "__main__":
-    run_traffic_simulator()
+    stream_real_traffic()
