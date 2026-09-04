@@ -29,13 +29,12 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-<!-- HEADER -->
 <header class="sticky top-0 z-40 w-full border-b border-border bg-bg/85 backdrop-blur-xl">
   <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
     <div class="flex items-center gap-8">
       <div class="flex items-baseline gap-2 cursor-pointer">
         <span class="font-semibold text-lg text-brand">Aegis SOC</span>
-        <span class="text-xs font-mono text-muted">v4.2</span>
+        <span class="text-xs font-mono text-muted">v1</span>
       </div>
       <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
         <button onclick="switchTab('live')" id="nav-live" class="px-3 py-1.5 rounded-md text-brand bg-brand/10 transition-colors">Live Monitoring</button>
@@ -50,13 +49,11 @@
         <span class="text-on-surface-subtle font-mono text-[11px]">Stream Active</span>
       </div>
       
-      <!-- Notifications Bell -->
       <button onclick="toggleNotifications()" class="relative p-2 text-on-surface-subtle hover:text-on-surface rounded-lg hover:bg-card-bg transition-colors">
         <span class="material-symbols-outlined text-lg">notifications</span>
         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-red rounded-full"></span>
       </button>
 
-      <!-- Notifications Dropdown -->
       <div id="notif-dropdown" class="hidden absolute top-12 right-0 w-96 bg-card-bg border border-border rounded-xl shadow-2xl overflow-hidden z-50">
         <div class="p-3 border-b border-border bg-bg font-semibold text-sm">Actionable Alerts</div>
         <div class="p-4 bg-accent-red/5 hover:bg-accent-red/10 cursor-pointer flex flex-col gap-2 transition-colors border-l-2 border-accent-red">
@@ -73,30 +70,48 @@
 </header>
 
 <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
-  <!-- TAB 1: LIVE MONITORING -->
   <div id="tab-live" class="flex flex-col gap-6">
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-semibold tracking-tight">Live Network Ingress</h1>
-        <p class="text-sm text-on-surface-subtle mt-1">Real-time volumetric traffic compared against baseline.</p>
+        <p class="text-sm text-on-surface-subtle mt-1">Real-time volumetric traffic compared against baseline (X-Axis: Time Progression | Y-Axis: Threat Risk Score & Volume).</p>
       </div>
     </div>
     
-    <!-- SVG Area Chart -->
-    <div class="p-6 rounded-xl border border-border bg-card-bg">
-      <div class="relative w-full pt-2 pb-2"><div class="h-60 w-full">
-        <svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 720 220">
-          <defs>
-            <lineargradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"></stop><stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0"></stop></lineargradient>
-          </defs>
-          <line stroke="#27272a" stroke-dasharray="4 4" x1="0" x2="720" y1="50" y2="50"></line>
-          <path d="M0,160 Q60,150 120,155 T240,158 T360,148 T480,140 T600,150 T720,155 L720,200 L0,200 Z" fill="url(#grad)"></path>
-          <path d="M0,160 Q60,150 120,155 T240,158 T360,148 T480,140 T600,150 T720,155" fill="none" stroke="#06b6d4" stroke-width="2"></path>
-        </svg>
-      </div></div>
+    <div class="p-6 rounded-xl border border-border bg-card-bg flex flex-col gap-2">
+      <div class="flex justify-between items-center text-[11px] font-mono text-muted px-2">
+        <span>Y-Axis: Risk & Ingress Volume (Gbps)</span>
+        <span>X-Axis: Real-Time Flow Timeline (Moving Window)</span>
+      </div>
+      <div class="relative w-full pt-2 pb-2">
+        <div class="h-60 w-full relative overflow-hidden">
+          <div class="absolute left-0 top-0 text-[10px] font-mono text-muted">Peak (Critical)</div>
+          <div class="absolute left-0 top-1/2 text-[10px] font-mono text-muted">Baseline</div>
+          <div class="absolute left-0 bottom-0 text-[10px] font-mono text-muted">Normal</div>
+
+          <svg class="w-full h-full pl-12 overflow-visible" preserveAspectRatio="none" viewBox="0 0 720 220">
+            <defs>
+              <linearGradient id="grad-dynamic" x1="0" x2="0" y1="0" y2="1">
+                <stop id="grad-stop-top" offset="0%" stop-color="#06b6d4" stop-opacity="0.3"></stop>
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0"></stop>
+              </linearGradient>
+            </defs>
+
+            <line stroke="#27272a" stroke-dasharray="4 4" x1="0" x2="720" y1="40" y2="40"></line>
+            <line stroke="#27272a" stroke-dasharray="4 4" x1="0" x2="720" y1="110" y2="110"></line>
+            <line stroke="#27272a" stroke-dasharray="4 4" x1="0" x2="720" y1="180" y2="180"></line>
+
+            <path id="live-area-path" d="" fill="url(#grad-dynamic)"></path>
+            <path id="live-line-path" d="" fill="none" stroke="#06b6d4" stroke-width="2.5"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="flex justify-between items-center text-[10px] font-mono text-muted px-2 pt-1 border-t border-border/40">
+        <span>Status: Streaming Live Telemetry</span>
+        <span id="chart-status-indicator" class="text-accent-cyan">Normal Flow</span>
+      </div>
     </div>
 
-    <!-- Data Table -->
     <div class="rounded-xl border border-border bg-card-bg overflow-hidden flex flex-col">
       <div class="p-5 border-b border-border flex justify-between"><h2 class="text-base font-semibold">Real-Time Detections</h2></div>
       <div class="overflow-x-auto">
@@ -112,7 +127,6 @@
     </div>
   </div>
 
-  <!-- TAB 2: SYSTEM INSIGHTS -->
   <div id="tab-insights" class="hidden flex flex-col gap-6">
     <div>
       <h1 class="text-2xl font-semibold tracking-tight">System Insights</h1>
@@ -142,24 +156,15 @@
       </div>
     </div>
 
-    <!-- Classifiers Breakdown -->
     <div class="p-6 rounded-xl border border-border bg-card-bg">
-      <h2 class="text-base font-semibold pb-4 border-b border-border/60">UNSW-NB15 Classifiers</h2>
-      <div class="mt-4 flex flex-col gap-4 text-xs font-mono">
-        <div class="flex justify-between items-center"><span class="text-accent-red">Exploits</span><span id="val-exploits">0%</span></div>
-        <div class="w-full bg-border/50 h-1"><div id="bar-exploits" class="bg-accent-red h-1" style="width: 0%"></div></div>
-        
-        <div class="flex justify-between items-center"><span class="text-accent-amber">Generic</span><span id="val-generic">0%</span></div>
-        <div class="w-full bg-border/50 h-1"><div id="bar-generic" class="bg-accent-amber h-1" style="width: 0%"></div></div>
-
-        <div class="flex justify-between items-center"><span class="text-accent-cyan">Fuzzers</span><span id="val-fuzzers">0%</span></div>
-        <div class="w-full bg-border/50 h-1"><div id="bar-fuzzers" class="bg-accent-cyan h-1" style="width: 0%"></div></div>
+      <h2 class="text-base font-semibold pb-4 border-b border-border/60">UNSW-NB15 Dynamic Classifiers</h2>
+      <div id="classifiers-container" class="mt-4 flex flex-col gap-4 text-xs font-mono">
+        <div class="text-muted">Awaiting threat classification data...</div>
       </div>
     </div>
   </div>
 </main>
 
-<!-- DRAWER -->
 <aside id="side-drawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-card-bg border-l border-border z-50 transform translate-x-full transition-transform flex flex-col">
   <div class="p-6 border-b border-border flex justify-between items-center">
     <div class="flex gap-2 items-center"><span id="drawer-id" class="px-2 py-0.5 rounded text-[11px] font-mono bg-accent-red/20 text-accent-red"></span><h3 class="font-semibold">Event Diagnostics</h3></div>
@@ -180,7 +185,10 @@
         <div class="p-2 border border-border bg-bg flex justify-between text-muted">proto:<span id="feat-proto" class="text-white"></span></div>
       </div>
     </div>
-    <button onclick="showToast('Asset Isolated and Blocked.'); closeDrawer();" class="mt-auto py-2 bg-accent-red text-white rounded hover:bg-accent-red/90 flex justify-center gap-2">
+    <button onclick="copyConnectionInfo()" class="mt-auto py-2 bg-brand text-bg font-semibold rounded hover:bg-brand/90 flex justify-center gap-2">
+      <span class="material-symbols-outlined text-sm">content_copy</span> Copy Connection Info
+    </button>
+    <button onclick="showToast('Asset Isolated and Blocked.'); closeDrawer();" class="py-2 bg-accent-red text-white rounded hover:bg-accent-red/90 flex justify-center gap-2">
       <span class="material-symbols-outlined text-sm">shield</span> Isolate Node
     </button>
   </div>
@@ -189,8 +197,10 @@
 <div id="toast-container"></div>
 
 <script>
-  // هنسحب الـ API URL ديناميكياً من الـ Environment Variable أو لو مش موجود هياخد لوكال
   const API_BASE = window.ENV_API_URL || "http://localhost:8001";
+  let activeAlertData = null;
+
+  let chartDataPoints = Array.from({ length: 25 }, () => ({ y: 140, isCritical: false }));
 
   function showToast(message) {
     const container = document.getElementById('toast-container');
@@ -213,11 +223,79 @@
     el.classList.toggle('hidden');
   }
 
-  function updateBar(id_prefix, percentage) {
-    const valEl = document.getElementById(`val-${id_prefix}`);
-    const barEl = document.getElementById(`bar-${id_prefix}`);
-    if(valEl) valEl.innerText = `${percentage}%`;
-    if(barEl) barEl.style.width = `${percentage}%`;
+  function renderDynamicClassifiers(classifications) {
+    const container = document.getElementById('classifiers-container');
+    if (!container) return;
+    
+    if (!classifications || Object.keys(classifications).length === 0 || (Object.keys(classifications).length === 1 && classifications['No Active Threats'] === 0)) {
+      container.innerHTML = `<div class="text-muted">No active threats classified yet. System running on baseline normal flow.</div>`;
+      return;
+    }
+
+    let html = '';
+    const colors = ['text-accent-red', 'text-accent-amber', 'text-accent-cyan', 'text-brand', 'text-accent-green'];
+    const bgColors = ['bg-accent-red', 'bg-accent-amber', 'bg-accent-cyan', 'bg-brand', 'bg-accent-green'];
+    
+    let i = 0;
+    for (const [cat, pct] of Object.entries(classifications)) {
+      const colorClass = colors[i % colors.length];
+      const bgClass = bgColors[i % bgColors.length];
+      html += `
+        <div class="flex justify-between items-center"><span class="${colorClass}">${cat}</span><span id="val-${cat}">${pct}%</span></div>
+        <div class="w-full bg-border/50 h-1"><div class="${bgClass} h-1" style="width: ${pct}%"></div></div>
+      `;
+      i++;
+    }
+    container.innerHTML = html;
+  }
+
+  async function updateTrafficChart() {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/alerts`);
+      const alerts = await res.json();
+      const hasCritical = alerts.some(a => a.severity === 'Critical' || a.severity === 'High');
+
+      let nextY = 140 + (Math.random() * 20 - 10);
+      if (hasCritical) {
+        nextY = 45 + (Math.random() * 25);
+      }
+
+      chartDataPoints.shift();
+      chartDataPoints.push({ y: nextY, isCritical: hasCritical });
+
+      const stepX = 720 / (chartDataPoints.length - 1);
+      let pathString = "";
+      
+      chartDataPoints.forEach((pt, index) => {
+        const x = index * stepX;
+        if (index === 0) {
+          pathString += `M ${x},${pt.y}`;
+        } else {
+          pathString += ` L ${x},${pt.y}`;
+        }
+      });
+
+      const areaString = `${pathString} L 720,220 L 0,220 Z`;
+
+      document.getElementById('live-line-path').setAttribute('d', pathString);
+      document.getElementById('live-area-path').setAttribute('d', areaString);
+
+      const lineEl = document.getElementById('live-line-path');
+      const stopEl = document.getElementById('grad-stop-top');
+      const statusEl = document.getElementById('chart-status-indicator');
+
+      if (hasCritical) {
+        lineEl.setAttribute('stroke', '#ef4444');
+        stopEl.setAttribute('stop-color', '#ef4444');
+        statusEl.innerText = "Threat Spike Detected!";
+        statusEl.className = "text-accent-red font-semibold animate-pulse";
+      } else {
+        lineEl.setAttribute('stroke', '#06b6d4');
+        stopEl.setAttribute('stop-color', '#06b6d4');
+        statusEl.innerText = "Normal Flow";
+        statusEl.className = "text-accent-cyan";
+      }
+    } catch (e) {}
   }
 
   async function fetchStats() {
@@ -229,10 +307,7 @@
       document.getElementById('stat-ips').innerText = data.suspicious_ips;
       document.getElementById('stat-throughput').innerText = data.throughput_gbps + ' Gbps';
 
-      const classes = data.classifications;
-      if(classes['Exploits'] !== undefined) updateBar('exploits', classes['Exploits']);
-      if(classes['Generic'] !== undefined) updateBar('generic', classes['Generic']);
-      if(classes['Fuzzers'] !== undefined) updateBar('fuzzers', classes['Fuzzers']);
+      renderDynamicClassifiers(data.classifications);
     } catch (e) {}
   }
 
@@ -253,28 +328,25 @@
             <td class="py-3 px-6 font-medium">${a.attack_category}</td>
             <td class="py-3 px-6 font-mono text-brand">${a.srcip}</td>
             <td class="py-3 px-6 font-mono">${a.dstip}</td>
-            <td class="py-3 px-6 text-right"><button onclick="openDrawer('${a.event_id}')" class="px-2 py-1 text-[10px] bg-accent-red/20 text-accent-red rounded hover:bg-accent-red/80">Inspect</button></td>
+            <td class="py-3 px-6 text-right"><button onclick='openDrawer(${JSON.stringify(a)})' class="px-2 py-1 text-[10px] bg-accent-red/20 text-accent-red rounded hover:bg-accent-red/80">Inspect</button></td>
           </tr>`;
       });
     } catch (e) {}
   }
 
-  async function openDrawer(id) {
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/alerts/${id}`);
-      const a = await res.json();
-      document.getElementById('drawer-id').innerText = `#${a.event_id}`;
-      document.getElementById('drawer-target').innerText = a.dstip;
-      document.getElementById('drawer-src').innerText = a.srcip;
-      document.getElementById('drawer-conf').innerText = `${(a.anomaly_score * 100).toFixed(1)}%`;
-      document.getElementById('feat-sbytes').innerText = a.raw_features.sbytes || 'N/A';
-      document.getElementById('feat-dbytes').innerText = a.raw_features.dbytes || 'N/A';
-      document.getElementById('feat-sttl').innerText = a.raw_features.sttl || 'N/A';
-      document.getElementById('feat-proto').innerText = a.raw_features.proto || 'N/A';
-      
-      document.getElementById('side-drawer').classList.remove('translate-x-full');
-      document.getElementById('drawer-backdrop').classList.remove('hidden');
-    } catch (e) {}
+  function openDrawer(alertObj) {
+    activeAlertData = alertObj;
+    document.getElementById('drawer-id').innerText = `#${alertObj.event_id}`;
+    document.getElementById('drawer-target').innerText = alertObj.dstip;
+    document.getElementById('drawer-src').innerText = alertObj.srcip;
+    document.getElementById('drawer-conf').innerText = `${(alertObj.anomaly_score * 100).toFixed(1)}%`;
+    document.getElementById('feat-sbytes').innerText = alertObj.raw_features.sbytes || 'N/A';
+    document.getElementById('feat-dbytes').innerText = alertObj.raw_features.dbytes || 'N/A';
+    document.getElementById('feat-sttl').innerText = alertObj.raw_features.sttl || 'N/A';
+    document.getElementById('feat-proto').innerText = alertObj.raw_features.proto || 'N/A';
+    
+    document.getElementById('side-drawer').classList.remove('translate-x-full');
+    document.getElementById('drawer-backdrop').classList.remove('hidden');
   }
 
   function closeDrawer() {
@@ -282,10 +354,23 @@
     document.getElementById('drawer-backdrop').classList.add('hidden');
   }
 
+  function copyConnectionInfo() {
+    if (!activeAlertData) return;
+    const textToCopy = `Event ID: ${activeAlertData.event_id}\nSource IP: ${activeAlertData.srcip}\nTarget IP: ${activeAlertData.dstip}\nSeverity: ${activeAlertData.severity}\nClassification: ${activeAlertData.attack_category}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      showToast('Connection info copied to clipboard!');
+    }).catch(err => {
+      showToast('Failed to copy info.');
+    });
+  }
+
   setInterval(fetchStats, 2000);
   setInterval(fetchAlerts, 2000);
+  setInterval(updateTrafficChart, 1000);
+  
   fetchStats();
   fetchAlerts();
+  updateTrafficChart();
 </script>
 </body>
 </html>
